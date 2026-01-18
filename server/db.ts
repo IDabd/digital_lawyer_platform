@@ -489,12 +489,12 @@ export async function getCalendarEvents(userId: number, startDate?: Date, endDat
   if (!db) return [];
   
   const conditions = [eq(calendarEvents.createdBy, userId)];
-  if (startDate) conditions.push(gte(calendarEvents.startTime, startDate));
-  if (endDate) conditions.push(lte(calendarEvents.startTime, endDate));
+  if (startDate) conditions.push(gte(calendarEvents.startDate, startDate));
+  if (endDate) conditions.push(lte(calendarEvents.startDate, endDate));
   
   return await db.select().from(calendarEvents)
     .where(and(...conditions))
-    .orderBy(calendarEvents.startTime);
+    .orderBy(calendarEvents.startDate);
 }
 
 export async function updateCalendarEvent(id: number, data: Partial<InsertCalendarEvent>) {
@@ -502,6 +502,13 @@ export async function updateCalendarEvent(id: number, data: Partial<InsertCalend
   if (!db) throw new Error("Database not available");
   
   await db.update(calendarEvents).set(data).where(eq(calendarEvents.id, id));
+}
+
+export async function deleteCalendarEvent(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
 }
 
 // ============= NOTIFICATION OPERATIONS =============
@@ -650,4 +657,11 @@ export async function updateLegalTemplate(id: number, data: Partial<InsertLegalT
   if (!db) throw new Error("Database not available");
   
   await db.update(legalTemplates).set(data).where(eq(legalTemplates.id, id));
+}
+
+export async function deleteLegalTemplate(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(legalTemplates).where(eq(legalTemplates.id, id));
 }

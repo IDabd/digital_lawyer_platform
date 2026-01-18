@@ -31,36 +31,36 @@ export const invoicesRouter = router({
       return await db.getInvoicesByStatus(input.status, ctx.user.id);
     }),
 
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getAllInvoices(ctx.user.id);
+  }),
+
   create: protectedProcedure
     .input(z.object({
       caseId: z.number(),
       clientId: z.number(),
-      invoiceNumber: z.string().min(1),
-      subtotal: z.string(),
-      taxRate: z.string().default("15.00"),
-      discount: z.string().default("0.00"),
-      notes: z.string().optional(),
+      description: z.string().optional(),
+      amount: z.number(),
+      taxAmount: z.number(),
+      totalAmount: z.number(),
+      status: z.enum(["draft", "pending", "paid", "overdue", "cancelled"]),
       dueDate: z.date().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const subtotal = parseFloat(input.subtotal);
-      const taxRate = parseFloat(input.taxRate);
-      const discount = parseFloat(input.discount);
-      
-      const taxAmount = (subtotal * taxRate / 100).toFixed(2);
-      const total = (subtotal + parseFloat(taxAmount) - discount).toFixed(2);
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       await db.createInvoice({
-        invoiceNumber: input.invoiceNumber,
+        invoiceNumber,
         caseId: input.caseId,
         clientId: input.clientId,
-        status: "draft",
-        subtotal: input.subtotal,
-        taxRate: input.taxRate,
-        taxAmount,
-        discount: input.discount,
-        total,
-        notes: input.notes || null,
+        status: input.status,
+        subtotal: input.amount.toString(),
+        taxRate: "15.00",
+        taxAmount: input.taxAmount.toString(),
+        discount: "0.00",
+        total: input.totalAmount.toString(),
+        notes: input.description || null,
         dueDate: input.dueDate || null,
         paidDate: null,
         createdBy: ctx.user.id,
@@ -123,16 +123,22 @@ export const calendarRouter = router({
       return await db.getCalendarEvents(ctx.user.id, input.startDate, input.endDate);
     }),
 
+  list: protectedProcedure
+    .query(async ({ ctx }) => {
+      return await db.getCalendarEvents(ctx.user.id);
+    }),
+
   create: protectedProcedure
     .input(z.object({
-      caseId: z.number().optional(),
+      caseId: z.number().optional().nullable(),
       title: z.string().min(1),
-      description: z.string().optional(),
-      eventType: z.string(),
-      location: z.string().optional(),
-      startTime: z.date(),
-      endTime: z.date(),
-      attendees: z.array(z.number()).optional(),
+      description: z.string().optional().nullable(),
+      eventType: z.enum(["hearing", "meeting", "deadline", "consultation", "other"]),
+      status: z.enum(["scheduled", "completed", "cancelled"]).optional(),
+      location: z.string().optional().nullable(),
+      startDate: z.date(),
+      endDate: z.date(),
+      attendees: z.string().optional().nullable(),
       reminderMinutes: z.number().default(30),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -141,29 +147,16 @@ export const calendarRouter = router({
         title: input.title,
         description: input.description || null,
         eventType: input.eventType,
+        status: input.status || "scheduled",
         location: input.location || null,
-        startTime: input.startTime,
-        endTime: input.endTime,
+        startDate: input.startDate,
+        endDate: input.endDate,
         attendees: input.attendees ? JSON.stringify(input.attendees) : null,
         reminderMinutes: input.reminderMinutes,
         createdBy: ctx.user.id,
       });
 
-      // Notify attendees
-      if (input.attendees) {
-        for (const attendeeId of input.attendees) {
-          if (attendeeId !== ctx.user.id) {
-            await db.createNotification({
-              userId: attendeeId,
-              title: "New Event",
-              message: `You have been invited to: ${input.title}`,
-              type: "calendar",
-              relatedId: null,
-              isRead: false,
-            });
-          }
-        }
-      }
+      // Note: attendees is now a string, not an array
 
       return { success: true };
     }),
@@ -172,21 +165,25 @@ export const calendarRouter = router({
     .input(z.object({
       id: z.number(),
       title: z.string().optional(),
-      description: z.string().optional(),
-      eventType: z.string().optional(),
-      location: z.string().optional(),
-      startTime: z.date().optional(),
-      endTime: z.date().optional(),
-      attendees: z.array(z.number()).optional(),
+      description: z.string().optional().nullable(),
+      eventType: z.enum(["hearing", "meeting", "deadline", "consultation", "other"]).optional(),
+      status: z.enum(["scheduled", "completed", "cancelled"]).optional(),
+      location: z.string().optional().nullable(),
+      startDate: z.date().optional(),
+      endDate: z.date().optional(),
+      attendees: z.string().optional().nullable(),
       reminderMinutes: z.number().optional(),
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      const updateData: any = { ...data };
-      if (data.attendees) {
-        updateData.attendees = JSON.stringify(data.attendees);
-      }
-      await db.updateCalendarEvent(id, updateData);
+      await db.updateCalendarEvent(id, data);
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.deleteCalendarEvent(input.id);
       return { success: true };
     }),
 });
@@ -589,24 +586,19 @@ export const templatesRouter = router({
 
   create: protectedProcedure
     .input(z.object({
-      name: z.string().min(1),
-      description: z.string().optional(),
+      title: z.string().min(1),
+      description: z.string().optional().nullable(),
       category: z.string(),
-      templateContent: z.string().min(1),
-      variables: z.array(z.object({
-        name: z.string(),
-        label: z.string(),
-        type: z.string(),
-        required: z.boolean(),
-      })),
+      content: z.string().min(1),
+      variables: z.string().optional().nullable(),
     }))
     .mutation(async ({ input, ctx }) => {
       await db.createLegalTemplate({
-        name: input.name,
+        name: input.title,
         description: input.description || null,
         category: input.category,
-        templateContent: input.templateContent,
-        variables: JSON.stringify(input.variables),
+        templateContent: input.content,
+        variables: input.variables || null,
         isActive: true,
         createdBy: ctx.user.id,
       });
@@ -618,24 +610,22 @@ export const templatesRouter = router({
     .input(z.object({
       id: z.number(),
       name: z.string().optional(),
-      description: z.string().optional(),
+      description: z.string().optional().nullable(),
       category: z.string().optional(),
       templateContent: z.string().optional(),
-      variables: z.array(z.object({
-        name: z.string(),
-        label: z.string(),
-        type: z.string(),
-        required: z.boolean(),
-      })).optional(),
+      variables: z.string().optional().nullable(),
       isActive: z.boolean().optional(),
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      const updateData: any = { ...data };
-      if (data.variables) {
-        updateData.variables = JSON.stringify(data.variables);
-      }
-      await db.updateLegalTemplate(id, updateData);
+      await db.updateLegalTemplate(id, data);
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.deleteLegalTemplate(input.id);
       return { success: true };
     }),
 });

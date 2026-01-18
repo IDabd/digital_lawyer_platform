@@ -1,0 +1,1 @@
+ALTER TABLE `clients` ADD `status` enum('active','inactive') DEFAULT 'active' NOT NULL;

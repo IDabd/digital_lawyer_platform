@@ -75,18 +75,27 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         name: z.string().min(1),
-        email: z.string().email().optional(),
-        phone: z.string().optional(),
-        address: z.string().optional(),
-        nationalId: z.string().optional(),
-        companyName: z.string().optional(),
-        companyRegistration: z.string().optional(),
-        type: z.enum(["individual", "company"]),
-        notes: z.string().optional(),
+        email: z.string().email().optional().nullable(),
+        phone: z.string().optional().nullable(),
+        address: z.string().optional().nullable(),
+        nationalId: z.string().optional().nullable(),
+        companyName: z.string().optional().nullable(),
+        companyRegistration: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
+        status: z.enum(["active", "inactive"]).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         await db.createClient({
-          ...input,
+          name: input.name,
+          email: input.email || null,
+          phone: input.phone || null,
+          address: input.address || null,
+          nationalId: input.nationalId || null,
+          companyName: input.companyName || null,
+          companyRegistration: input.companyRegistration || null,
+          type: input.companyName ? "company" : "individual",
+          status: input.status || "active",
+          notes: input.notes || null,
           createdBy: ctx.user.id,
         });
         return { success: true };
@@ -96,14 +105,14 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         name: z.string().min(1).optional(),
-        email: z.string().email().optional(),
-        phone: z.string().optional(),
-        address: z.string().optional(),
-        nationalId: z.string().optional(),
-        companyName: z.string().optional(),
-        companyRegistration: z.string().optional(),
+        email: z.string().email().optional().nullable(),
+        phone: z.string().optional().nullable(),
+        address: z.string().optional().nullable(),
+        nationalId: z.string().optional().nullable(),
+        companyName: z.string().optional().nullable(),
+        companyRegistration: z.string().optional().nullable(),
         type: z.enum(["individual", "company"]).optional(),
-        notes: z.string().optional(),
+        notes: z.string().optional().nullable(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;

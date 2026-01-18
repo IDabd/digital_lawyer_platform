@@ -31,6 +31,7 @@ export const clients = mysqlTable("clients", {
   companyName: text("companyName"),
   companyRegistration: varchar("companyRegistration", { length: 50 }),
   type: mysqlEnum("type", ["individual", "company"]).default("individual").notNull(),
+  status: mysqlEnum("status", ["active", "inactive"]).default("active").notNull(),
   notes: text("notes"),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -186,7 +187,7 @@ export const invoices = mysqlTable("invoices", {
   invoiceNumber: varchar("invoiceNumber", { length: 50 }).notNull().unique(),
   caseId: int("caseId").notNull(),
   clientId: int("clientId").notNull(),
-  status: mysqlEnum("status", ["draft", "sent", "paid", "overdue", "cancelled"]).default("draft").notNull(),
+  status: mysqlEnum("status", ["draft", "pending", "sent", "paid", "overdue", "cancelled"]).default("draft").notNull(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   taxRate: decimal("taxRate", { precision: 5, scale: 2 }).default("15.00").notNull(), // VAT 15%
   taxAmount: decimal("taxAmount", { precision: 10, scale: 2 }).notNull(),
@@ -249,18 +250,19 @@ export const calendarEvents = mysqlTable("calendar_events", {
   caseId: int("caseId"),
   title: text("title").notNull(),
   description: text("description"),
-  eventType: varchar("eventType", { length: 50 }).notNull(), // "hearing", "meeting", "deadline"
+  eventType: mysqlEnum("eventType", ["hearing", "meeting", "deadline", "consultation", "other"]).default("other").notNull(),
+  status: mysqlEnum("status", ["scheduled", "completed", "cancelled"]).default("scheduled").notNull(),
   location: text("location"),
-  startTime: timestamp("startTime").notNull(),
-  endTime: timestamp("endTime").notNull(),
-  attendees: text("attendees"), // JSON array of user ids
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  attendees: text("attendees"),
   reminderMinutes: int("reminderMinutes").default(30),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   caseIdx: index("case_idx").on(table.caseId),
-  startIdx: index("start_idx").on(table.startTime),
+  startIdx: index("start_idx").on(table.startDate),
 }));
 
 /**
@@ -305,7 +307,7 @@ export const legalTemplates = mysqlTable("legal_templates", {
   description: text("description"),
   category: varchar("category", { length: 100 }).notNull(), // "عقد", "لائحة", "مذكرة"
   templateContent: text("templateContent").notNull(), // Template with placeholders
-  variables: text("variables").notNull(), // JSON array of variable definitions
+  variables: text("variables"), // JSON array of variable definitions or simple string
   isActive: boolean("isActive").default(true).notNull(),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

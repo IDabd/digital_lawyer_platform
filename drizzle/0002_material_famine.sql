@@ -1,0 +1,1 @@
+ALTER TABLE `invoices` MODIFY COLUMN `status` enum('draft','pending','sent','paid','overdue','cancelled') NOT NULL DEFAULT 'draft';
