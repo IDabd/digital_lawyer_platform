@@ -1,10 +1,13 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useLanguage } from "@/lib/i18n";
+import { getLoginUrl } from "@/const";
+
 export default function ClientDetail() {
-  return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold">ClientDetail Page - Coming Soon</h1>
-        <p className="text-muted-foreground mt-2">This page is under development</p>
-      </div>
-    </div>
-  );
+  const { user, loading, isAuthenticated } = useAuth();
+  const { language } = useLanguage();
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
+  if (!isAuthenticated) { window.location.href = getLoginUrl(); return null; }
+
+  return <div className="min-h-screen bg-background p-6" dir={language === 'ar' ? 'rtl' : 'ltr'}><h1>{language === 'ar' ? 'تفاصيل العميل' : 'Client Detail'}</h1></div>;
 }

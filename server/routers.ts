@@ -232,6 +232,11 @@ export const appRouter = router({
 
   // ============= DOCUMENT ROUTES =============
   documents: router({
+    getAll: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getAllDocuments(ctx.user.id);
+      }),
+
     getByCase: protectedProcedure
       .input(z.object({ caseId: z.number() }))
       .query(async ({ input }) => {

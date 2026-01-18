@@ -250,6 +250,12 @@ export async function getDocumentById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getAllDocuments(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(documents).where(eq(documents.uploadedBy, userId)).orderBy(desc(documents.createdAt));
+}
+
 export async function getDocumentsByCase(caseId: number) {
   const db = await getDb();
   if (!db) return [];
