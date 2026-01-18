@@ -20,6 +20,7 @@ import {
   templatesRouter,
   reportsRouter,
 } from "./routers_extended";
+import { clientAuthRouter, clientPortalAdminRouter } from "./clientAuthRouter";
 
 // Helper to create case activity
 async function logCaseActivity(caseId: number, userId: number, activityType: string, description: string, metadata?: any) {
@@ -527,6 +528,10 @@ export const appRouter = router({
   sharedDocs: sharedDocsRouter,
   templates: templatesRouter,
   reports: reportsRouter,
+  
+  // Client portal routers
+  clientAuth: clientAuthRouter,
+  clientPortalAdmin: clientPortalAdminRouter,
 });
 
 export type AppRouter = typeof appRouter;

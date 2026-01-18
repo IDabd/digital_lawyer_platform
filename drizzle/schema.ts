@@ -42,6 +42,40 @@ export const clients = mysqlTable("clients", {
 }));
 
 /**
+ * Client authentication table - for client portal access
+ */
+export const clientAuth = mysqlTable("client_auth", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull().unique(),
+  passwordHash: text("passwordHash").notNull(),
+  inviteToken: varchar("inviteToken", { length: 100 }).unique(),
+  inviteExpiry: timestamp("inviteExpiry"),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastLoginAt: timestamp("lastLoginAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  clientIdx: index("client_idx").on(table.clientId),
+  tokenIdx: index("token_idx").on(table.inviteToken),
+}));
+
+/**
+ * Client messages table - for secure communication
+ */
+export const clientMessages = mysqlTable("client_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull(),
+  senderId: int("senderId").notNull(), // userId or clientId
+  senderType: mysqlEnum("senderType", ["lawyer", "client"]).notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("isRead").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  clientIdx: index("client_idx").on(table.clientId),
+  readIdx: index("read_idx").on(table.isRead),
+}))
+
+/**
  * Cases table - represents legal cases
  */
 export const cases = mysqlTable("cases", {
@@ -414,3 +448,7 @@ export type AIExtraction = typeof aiExtractions.$inferSelect;
 export type InsertAIExtraction = typeof aiExtractions.$inferInsert;
 export type LegalTemplate = typeof legalTemplates.$inferSelect;
 export type InsertLegalTemplate = typeof legalTemplates.$inferInsert;
+export type ClientAuth = typeof clientAuth.$inferSelect;
+export type InsertClientAuth = typeof clientAuth.$inferInsert;
+export type ClientMessage = typeof clientMessages.$inferSelect;
+export type InsertClientMessage = typeof clientMessages.$inferInsert;

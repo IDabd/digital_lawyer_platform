@@ -16,6 +16,8 @@ import {
   notifications, InsertNotification,
   aiExtractions, InsertAIExtraction,
   legalTemplates, InsertLegalTemplate,
+  clientAuth, InsertClientAuth,
+  clientMessages, InsertClientMessage,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -138,6 +140,14 @@ export async function getClientById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getClientByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(clients).where(eq(clients.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function getAllClients(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -192,6 +202,15 @@ export async function getAllCases(userId: number) {
   
   return await db.select().from(cases)
     .where(or(eq(cases.createdBy, userId), eq(cases.assignedTo, userId)))
+    .orderBy(desc(cases.createdAt));
+}
+
+export async function getCasesByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(cases)
+    .where(eq(cases.clientId, clientId))
     .orderBy(desc(cases.createdAt));
 }
 
@@ -455,6 +474,15 @@ export async function getAllInvoices(userId: number) {
     .orderBy(desc(invoices.createdAt));
 }
 
+export async function getInvoicesByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(invoices)
+    .where(eq(invoices.clientId, clientId))
+    .orderBy(desc(invoices.createdAt));
+}
+
 export async function getInvoicesByStatus(status: string, userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -556,6 +584,15 @@ export async function createSharedDocument(share: InsertSharedDocument) {
   
   const result = await db.insert(sharedDocuments).values(share);
   return result;
+}
+
+export async function getSharedDocumentsByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(sharedDocuments)
+    .where(eq(sharedDocuments.clientId, clientId))
+    .orderBy(desc(sharedDocuments.createdAt));
 }
 
 export async function getSharedDocumentByToken(token: string) {
@@ -664,4 +701,92 @@ export async function deleteLegalTemplate(id: number) {
   if (!db) throw new Error("Database not available");
   
   await db.delete(legalTemplates).where(eq(legalTemplates.id, id));
+}
+
+// ============= CLIENT AUTH OPERATIONS =============
+
+export async function createClientAuth(auth: InsertClientAuth) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(clientAuth).values(auth);
+  return result;
+}
+
+export async function getClientAuthByClientId(clientId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(clientAuth)
+    .where(eq(clientAuth.clientId, clientId))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getClientAuthByToken(token: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(clientAuth)
+    .where(eq(clientAuth.inviteToken, token))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateClientAuth(clientId: number, data: Partial<InsertClientAuth>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(clientAuth).set(data).where(eq(clientAuth.clientId, clientId));
+}
+
+export async function updateClientLastLogin(clientId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(clientAuth)
+    .set({ lastLoginAt: new Date() })
+    .where(eq(clientAuth.clientId, clientId));
+}
+
+// ============= CLIENT MESSAGES OPERATIONS =============
+
+export async function createClientMessage(message: InsertClientMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(clientMessages).values(message);
+  return result;
+}
+
+export async function getClientMessages(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(clientMessages)
+    .where(eq(clientMessages.clientId, clientId))
+    .orderBy(desc(clientMessages.createdAt));
+}
+
+export async function markMessageAsRead(messageId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(clientMessages)
+    .set({ isRead: true })
+    .where(eq(clientMessages.id, messageId));
+}
+
+export async function getUnreadMessagesCount(clientId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(clientMessages)
+    .where(and(
+      eq(clientMessages.clientId, clientId),
+      eq(clientMessages.isRead, false)
+    ));
+  
+  return result[0]?.count || 0;
 }

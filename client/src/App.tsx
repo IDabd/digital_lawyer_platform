@@ -19,7 +19,9 @@ import Reports from "./pages/Reports";
 import AIFeatures from "./pages/AIFeatures";
 import Templates from "./pages/Templates";
 import Settings from "./pages/Settings";
-import ClientPortal from "./pages/ClientPortal";
+import ClientLogin from "./pages/ClientLogin";
+import ClientDashboard from "./pages/ClientDashboard";
+import ClientInvite from "./pages/ClientInvite";
 
 function Router() {
   return (
@@ -38,7 +40,9 @@ function Router() {
       <Route path={"/ai"} component={AIFeatures} />
       <Route path={"/templates"} component={Templates} />
       <Route path={"/settings"} component={Settings} />
-      <Route path={"/portal/:token"} component={ClientPortal} />
+      <Route path={"/client-portal/login"} component={ClientLogin} />
+      <Route path={"/client-portal/dashboard"} component={ClientDashboard} />
+      <Route path={"/client-portal/invite/:token"} component={ClientInvite} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
