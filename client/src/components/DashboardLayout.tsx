@@ -21,15 +21,38 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  LogOut, 
+  PanelLeft, 
+  Users, 
+  FileText, 
+  Folder, 
+  Receipt, 
+  Calendar as CalendarIcon, 
+  FileCode, 
+  Settings as SettingsIcon, 
+  BarChart3, 
+  Sparkles,
+  Home
+} from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: Home, label: "الصفحة الرئيسية", labelEn: "Home", path: "/" },
+  { icon: LayoutDashboard, label: "لوحة التحكم", labelEn: "Dashboard", path: "/dashboard" },
+  { icon: FileText, label: "القضايا", labelEn: "Cases", path: "/cases" },
+  { icon: Folder, label: "الوثائق", labelEn: "Documents", path: "/documents" },
+  { icon: Receipt, label: "الفواتير", labelEn: "Invoices", path: "/invoices" },
+  { icon: Users, label: "العملاء", labelEn: "Clients", path: "/clients" },
+  { icon: CalendarIcon, label: "التقويم", labelEn: "Calendar", path: "/calendar" },
+  { icon: FileCode, label: "القوالب", labelEn: "Templates", path: "/templates" },
+  { icon: BarChart3, label: "التقارير", labelEn: "Reports", path: "/reports" },
+  { icon: Sparkles, label: "الذكاء الاصطناعي", labelEn: "AI Features", path: "/ai" },
+  { icon: SettingsIcon, label: "الإعدادات", labelEn: "Settings", path: "/settings" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -170,8 +193,8 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                  <span className="font-semibold tracking-tight truncate text-primary">
+                    منصة المحامي الرقمي
                   </span>
                 </div>
               ) : null}

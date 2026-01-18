@@ -24,6 +24,17 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
+          'ui-vendor': ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          'calendar-vendor': ['react-big-calendar', 'date-fns'],
+          'trpc-vendor': ['@trpc/client', '@trpc/react-query', '@tanstack/react-query'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
   },
   server: {
     host: true,

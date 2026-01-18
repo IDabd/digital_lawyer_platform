@@ -1,31 +1,43 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "@/lib/i18n";
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Cases from "./pages/Cases";
-import CaseDetail from "./pages/CaseDetail";
-import Documents from "./pages/Documents";
-import Invoices from "./pages/Invoices";
-import InvoiceDetail from "./pages/InvoiceDetail";
-import Clients from "./pages/Clients";
-import ClientDetail from "./pages/ClientDetail";
-import Calendar from "./pages/Calendar";
-import Reports from "./pages/Reports";
-import AIFeatures from "./pages/AIFeatures";
-import Templates from "./pages/Templates";
-import Settings from "./pages/Settings";
-import ClientLogin from "./pages/ClientLogin";
-import ClientDashboard from "./pages/ClientDashboard";
-import ClientInvite from "./pages/ClientInvite";
+import { Loader2 } from "lucide-react";
+
+// Lazy load all pages for better performance
+const Home = lazy(() => import("./pages/Home"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Cases = lazy(() => import("./pages/Cases"));
+const CaseDetail = lazy(() => import("./pages/CaseDetail"));
+const Documents = lazy(() => import("./pages/Documents"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
+const Clients = lazy(() => import("./pages/Clients"));
+const ClientDetail = lazy(() => import("./pages/ClientDetail"));
+const Calendar = lazy(() => import("./pages/Calendar"));
+const Reports = lazy(() => import("./pages/Reports"));
+const AIFeatures = lazy(() => import("./pages/AIFeatures"));
+const Templates = lazy(() => import("./pages/Templates"));
+const Settings = lazy(() => import("./pages/Settings"));
+const ClientLogin = lazy(() => import("./pages/ClientLogin"));
+const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
+const ClientInvite = lazy(() => import("./pages/ClientInvite"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+
+// Loading component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
 
 function Router() {
   return (
-    <Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/cases"} component={Cases} />
@@ -45,7 +57,8 @@ function Router() {
       <Route path={"/client-portal/invite/:token"} component={ClientInvite} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </Suspense>
   );
 }
 
